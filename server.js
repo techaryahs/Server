@@ -33,20 +33,25 @@ app.use(bodyParser.json());
 // ✅ Send FCM Notification
 app.post("/sendNotification", async (req, res) => {
   try {
-    const { token, title, body } = req.body;
+    const { tokens, title, body } = req.body; // ✅ Expect list of tokens
+
+    if (!tokens || tokens.length === 0) {
+      return res.status(400).json({ error: "No tokens provided" });
+    }
 
     const message = {
-      token,
       notification: { title, body },
+      tokens, // ✅ Send to multiple
     };
 
-    const response = await admin.messaging().send(message);
-    console.log("✅ Notification sent:", response);
+    const response = await admin.messaging().sendEachForMulticast(message);
+    console.log("✅ Notifications sent:", response.successCount, "successes");
     res.status(200).json({ success: true, response });
   } catch (error) {
     console.error("❌ Error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 app.listen(5050, () => console.log("🚀 Server running on port 5050"));
